@@ -16,9 +16,13 @@ jobs:
       - name: checkout
         uses: actions/checkout@v3
 
+      - name: install pnpm
+        run: corepack enable
+
       - uses: actions/setup-node@v3
         with:
           node-version: 16
+          cache: 'pnpm'
 
       - name: cache node_modules
         id: node_modules_cache_id
@@ -29,8 +33,8 @@ jobs:
             */*/node_modules
           key: node_modules-${{ hashFiles('**/pnpm-lock.yaml') }}
 
-      - name: install
-        run: pnpm i --frozen-lockfile
+      - name: install packages
+        run: pnpm install --no-frozen-lockfile
 
   test-cli:
     name: Testing @zarm-design/cli on Node.js
@@ -45,9 +49,13 @@ jobs:
           # codecov.io requires a fetch depth > 1.
           fetch-depth: 2
 
+      - name: install pnpm
+        run: corepack enable
+
       - uses: actions/setup-node@v3
         with:
           node-version: 16
+          cache: 'pnpm'
 
       - name: restore cache from node_modules
         uses: actions/cache@v3
@@ -58,7 +66,7 @@ jobs:
           key: node_modules-${{ hashFiles('**/pnpm-lock.yaml') }}
 
       - name: test
-        run: pnpm --filter @zarm-design/cli test --coverage
+        run: pnpm --filter @zarm-design/cli run test --coverage
 
       - name: coverage
         run: bash <(curl -s https://codecov.io/bash)
@@ -71,9 +79,13 @@ jobs:
       - name: checkout
         uses: actions/checkout@v3
 
+      - name: install pnpm
+        run: corepack enable
+
       - uses: actions/setup-node@v3
         with:
           node-version: 16
+          cache: 'pnpm'
 
       - name: restore cache from node_modules
         uses: actions/cache@v3
@@ -90,7 +102,7 @@ jobs:
           key: cli-${{ github.sha }}
 
       - name: compile @zarm-design/cli
-        run: pnpm --filter @zarm-design/cli build
+        run: pnpm --filter @zarm-design/cli run build
     needs: setup
 
   compile-bem:
@@ -100,9 +112,13 @@ jobs:
       - name: checkout
         uses: actions/checkout@v3
 
+      - name: install pnpm
+        run: corepack enable
+
       - uses: actions/setup-node@v3
         with:
           node-version: 16
+          cache: 'pnpm'
 
       - name: restore cache from node_modules
         uses: actions/cache@v3
@@ -125,7 +141,7 @@ jobs:
           key: bem-${{ github.sha }}
 
       - name: compile @zarm-design/bem
-        run: pnpm --filter @zarm-design/bem build
+        run: pnpm --filter @zarm-design/bem run build
     needs: compile-cli
 
   compile-icons:
@@ -135,9 +151,13 @@ jobs:
       - name: checkout
         uses: actions/checkout@v3
 
+      - name: install pnpm
+        run: corepack enable
+
       - uses: actions/setup-node@v3
         with:
           node-version: 16
+          cache: 'pnpm'
 
       - name: restore cache from node_modules
         uses: actions/cache@v3
@@ -166,19 +186,23 @@ jobs:
           key: icons-${{ github.sha }}
 
       - name: compile @zarm-design/icons
-        run: pnpm --filter @zarm-design/icons build
+        run: pnpm --filter @zarm-design/icons run build
     needs: compile-bem
 
   compile:
-    name: compile zarm in react@17
+    name: Compile zarm
     runs-on: ubuntu-latest
     steps:
       - name: checkout
         uses: actions/checkout@v3
 
+      - name: install pnpm
+        run: corepack enable
+
       - uses: actions/setup-node@v3
         with:
           node-version: 16
+          cache: 'pnpm'
 
       - name: restore cache from node_modules
         uses: actions/cache@v3
@@ -208,8 +232,8 @@ jobs:
 
       - name: compile
         run: |
-          pnpm --filter zarm build:es
-          pnpm --filter zarm build:lib
+          pnpm --filter zarm run build:es
+          pnpm --filter zarm run build:lib
     needs: compile-icons
 
   lint:
@@ -219,9 +243,13 @@ jobs:
       - name: checkout
         uses: actions/checkout@v3
 
+      - name: install pnpm
+        run: corepack enable
+
       - uses: actions/setup-node@v3
         with:
           node-version: 16
+          cache: 'pnpm'
 
       - name: restore cache from node_modules
         uses: actions/cache@v3
@@ -242,9 +270,13 @@ jobs:
       - name: checkout
         uses: actions/checkout@v3
 
+      - name: install pnpm
+        run: corepack enable
+
       - uses: actions/setup-node@v3
         with:
           node-version: 16
+          cache: 'pnpm'
 
       - name: restore cache from node_modules
         uses: actions/cache@v3
@@ -257,14 +289,14 @@ jobs:
       - name: cache dist
         uses: actions/cache@v3
         with:
-          path: dist
+          path: packages/zarm/dist
           key: dist-${{ github.sha }}
 
       - name: dist
-        run: pnpm --filter zarm build:umd
+        run: pnpm --filter zarm run build:umd
         env:
           NODE_OPTIONS: --max_old_space_size=4096
-    needs: setup
+    needs: compile-cli
 
   test:
     name: Test
@@ -282,9 +314,13 @@ jobs:
           # codecov.io requires a fetch depth > 1.
           fetch-depth: 2
 
+      - name: install pnpm
+        run: corepack enable
+
       - uses: actions/setup-node@v3
         with:
           node-version: 16
+          cache: 'pnpm'
 
       - name: restore cache from node_modules
         uses: actions/cache@v3
@@ -300,32 +336,20 @@ jobs:
           path: packages/zarm-cli/dist
           key: cli-${{ github.sha }}
 
-      - name: restore cache from @zarm-design/bem
-        uses: actions/cache@v3
-        with:
-          path: packages/bem/lib
-          key: bem-${{ github.sha }}
-
-      - name: restore cache from @zarm-design/icons
-        uses: actions/cache@v3
-        with:
-          path: packages/zarm-icons/lib
-          key: icons-${{ github.sha }}
-
-     - name: restore cache from dist
+      - name: restore cache from dist
         if: ${{ matrix.module == 'dist' }}
         uses: actions/cache@v3
         with:
-          path: dist
+          path: packages/zarm/dist
           key: dist-${{ github.sha }}
 
       - name: install react 16
         if: ${{ matrix.react == '16' }}
-        run: pnpm --filter zarm install-react-16
+        run: pnpm --filter zarm run install-react-16
 
       - name: install react 18
         if: ${{ matrix.react == '18' }}
-        run: pnpm --filter zarm install-react-18
+        run: pnpm --filter zarm run install-react-18
 
       - name: check dist
         if: ${{ matrix.module == 'dist' }}
@@ -339,9 +363,9 @@ jobs:
 
       - name: test
         if: ${{ matrix.module == 'dom' }}
-        run: pnpm --filter zarm coverage
+        run: pnpm --filter zarm run coverage
 
       - name: coverage
         if: ${{ matrix.module == 'dom' && matrix.react == '17' }}
         run: bash <(curl -s https://codecov.io/bash)
-    needs: [setup, dist]
+    needs: [setup, dist, compile-cli]
